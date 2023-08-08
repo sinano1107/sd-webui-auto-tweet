@@ -9,6 +9,10 @@ from tweepy import Client
 
 
 class ExtensionTemplateScript(scripts.Script):
+    def __init__(self) -> None:
+        super().__init__()
+        self.autoTweet = False
+
     def show(self, _):
         return scripts.AlwaysVisible
 
