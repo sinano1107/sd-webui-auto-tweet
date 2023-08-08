@@ -25,7 +25,7 @@ class AutoTweetScript(scripts.Script):
 
 def on_image_saved(imageSaveParams: script_callbacks.ImageSaveParams):
     global autoTweet
-    if autoTweet == False:
+    if autoTweet == False and not imageSaveParams.filename.contains("grid"):
         return
     data = opts.data
     try:
