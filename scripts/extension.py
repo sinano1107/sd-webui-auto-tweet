@@ -1,47 +1,50 @@
 import modules.scripts as scripts
 import gradio as gr
-import os
 
-from modules import images, script_callbacks
-from modules.processing import process_images, Processed
-from modules.processing import Processed
-from modules.shared import opts, OptionInfo, cmd_opts, state
+from modules import script_callbacks, errors
+from modules.scripts import PostprocessImageArgs
+from modules.shared import opts, OptionInfo
 
-
-def on_after_component(component, **kwargs):
-    if component.label == "isTweetCheckbox":
-        gr.Markdown("Hello")
-
-
-script_callbacks.on_after_component(on_after_component)
-
-
-def test(isTweet):
-    if isTweet:
-        return "ツイートします"
-    else:
-        return "ツイートしません"
+from tweepy import Client
 
 
 class ExtensionTemplateScript(scripts.Script):
-    def title(self):
-        return "auto-tweet"
-
-    def show(self, is_img2img):
+    def show(self, _):
         return scripts.AlwaysVisible
 
-    def ui(self, is_img2img):
-        with gr.Accordion("auto-tweet", open=False):
-            with gr.Column():
-                isTweet = gr.Checkbox(False, label="isTweetCheckbox")
-                button = gr.Button("Test")
-                text = gr.Text("Hello")
-            button.click(test, inputs=isTweet, outputs=text)
-            return [isTweet]
+    def ui(self, _):
+        autoTweetCheckbox = gr.Checkbox(False, label="Enable auto tweet")
+        autoTweetCheckbox.change(
+            self.onChangeCheckbox, inputs=autoTweetCheckbox, outputs=autoTweetCheckbox
+        )
 
-    def run(self, p, isTweet):
-        proc = process_images(p)
-        return proc
+    def before_process(self, _):
+        self.resetClient()
+
+    def postprocess_image(self, p, pp: PostprocessImageArgs, *args):
+        if self.autoTweet:
+            self.client.create_tweet(text="Hello Twitter!")
+        return super().postprocess_image(p, pp, *args)
+
+    def onChangeCheckbox(self, value):
+        try:
+            if value:
+                self.resetClient()
+            self.autoTweet = value
+            return value
+        except:
+            errors.report("Please auto-tweet set up.")
+            return False
+
+    def resetClient(self):
+        data = opts.data
+        self.client = Client(
+            data["bearer_token"],
+            data["consumer_key"],
+            data["consumer_secret"],
+            data["access_token"],
+            data["access_token_secret"],
+        )
 
 
 def on_ui_settings():
