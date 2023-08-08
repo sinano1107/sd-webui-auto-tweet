@@ -5,7 +5,7 @@ from modules import script_callbacks, errors
 from modules.scripts import PostprocessImageArgs
 from modules.shared import opts, OptionInfo
 
-from tweepy import Client
+from tweepy import Client, Unauthorized
 
 
 class ExtensionTemplateScript(scripts.Script):
@@ -18,37 +18,29 @@ class ExtensionTemplateScript(scripts.Script):
 
     def ui(self, _):
         autoTweetCheckbox = gr.Checkbox(False, label="Enable auto tweet")
-        autoTweetCheckbox.change(
-            self.onChangeCheckbox, inputs=autoTweetCheckbox, outputs=autoTweetCheckbox
-        )
-
-    def before_process(self, _):
-        self.resetClient()
+        autoTweetCheckbox.change(self.onChangeCheckbox, inputs=autoTweetCheckbox)
 
     def postprocess_image(self, p, pp: PostprocessImageArgs, *args):
         if self.autoTweet:
-            self.client.create_tweet(text="Hello Twitter!")
+            self.tweet()
         return super().postprocess_image(p, pp, *args)
 
     def onChangeCheckbox(self, value):
-        try:
-            if value:
-                self.resetClient()
-            self.autoTweet = value
-            return value
-        except:
-            errors.report("Please auto-tweet set up.")
-            return False
+        self.autoTweet = value
 
-    def resetClient(self):
+    def tweet(self):
         data = opts.data
-        self.client = Client(
-            data["bearer_token"],
-            data["consumer_key"],
-            data["consumer_secret"],
-            data["access_token"],
-            data["access_token_secret"],
-        )
+        try:
+            client = Client(
+                data["bearer_token"],
+                data["consumer_key"],
+                data["consumer_secret"],
+                data["access_token"],
+                data["access_token_secret"],
+            )
+            client.create_tweet(text="Hello Twitter!")
+        except (KeyError, Unauthorized):
+            errors.report("Please autp-tweet set up.")
 
 
 def on_ui_settings():
