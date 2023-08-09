@@ -4,31 +4,21 @@ import gradio as gr
 from modules import script_callbacks, errors
 from modules.shared import opts, OptionInfo
 
-from tweepy import OAuthHandler, API, Client, Unauthorized
+from tweepy import OAuthHandler, API, Client, Unauthorized, TooManyRequests
+from requests.models import Response
 
 autoTweet = False
+api: API
+auth: OAuthHandler
+client: Client
 
 
 def onChangeCheckbox(value):
     global autoTweet
     autoTweet = value
-
-
-class AutoTweetScript(scripts.Script):
-    def show(self, _):
-        return scripts.AlwaysVisible
-
-    def ui(self, _):
-        autoTweetCheckbox = gr.Checkbox(False, label="Enable auto tweet")
-        autoTweetCheckbox.change(onChangeCheckbox, inputs=autoTweetCheckbox)
-
-
-def on_image_saved(imageSaveParams: script_callbacks.ImageSaveParams):
-    global autoTweet
-    if autoTweet == False and not imageSaveParams.filename.contains("grid"):
-        return
-    data = opts.data
-    try:
+    if autoTweet:
+        global api, auth, client
+        data = opts.data
         auth = OAuthHandler(
             data["consumer_key"],
             data["consumer_secret"],
@@ -43,10 +33,31 @@ def on_image_saved(imageSaveParams: script_callbacks.ImageSaveParams):
             data["access_token_secret"],
         )
         api = API(auth)
+
+
+class AutoTweetScript(scripts.Script):
+    def show(self, _):
+        return scripts.AlwaysVisible
+
+    def ui(self, _):
+        autoTweetCheckbox = gr.Checkbox(False, label="Enable auto tweet")
+        autoTweetCheckbox.change(onChangeCheckbox, inputs=autoTweetCheckbox)
+
+
+def on_image_saved(imageSaveParams: script_callbacks.ImageSaveParams):
+    global autoTweet
+    if autoTweet == False or "grid" in imageSaveParams.filename:
+        return
+    global api, auth, client
+    try:
         media = api.media_upload(imageSaveParams.filename)
         client.create_tweet(media_ids=[media.media_id])
     except (KeyError, Unauthorized):
-        errors.report("Please autp-tweet set up.")
+        errors.report("Please auto-tweet set up.", exc_info=True)
+    except TooManyRequests as e:
+        response: Response = e.response
+        print(response.headers)
+        errors.report("Request limit has been reached.", exc_info=True)
 
 
 script_callbacks.on_image_saved(on_image_saved)
