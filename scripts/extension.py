@@ -45,7 +45,8 @@ class AutoTweetScript(scripts.Script):
 
 
 def on_image_saved(imageSaveParams: script_callbacks.ImageSaveParams):
-    global autoTweet
+    global autoTweet, selected_imgae
+    selected_imgae = None
     if autoTweet == False or "grid" in imageSaveParams.filename:
         return
     global api, auth, client
@@ -63,12 +64,32 @@ def on_image_saved(imageSaveParams: script_callbacks.ImageSaveParams):
 script_callbacks.on_image_saved(on_image_saved)
 
 
+# 選択中の画像
+selected_imgae = None
+
+
 def on_after_component(component, **_):
-    # ti_galleryはトレーニングのものなので何もしない
-    if "_gallery" in component.elem_id and component.elem_id != "ti_gallery":
-        print(_)
+    if component.elem_id is None:
+        return
+
+    if component.elem_id == "txt2img_gallery":
+
+        def on_select(gallery, evt: gr.SelectData):
+            global selected_imgae
+            selected_imgae = gallery[evt.index]
+
+        component.select(on_select, inputs=[component])
+
         with gr.Row():
-            gr.Button("tweet")
+            tweet_btn = gr.Button(
+                "tweet",
+            )
+
+        def on_click():
+            global selected_imgae
+            print(selected_imgae)
+
+        tweet_btn.click(on_click)
 
 
 script_callbacks.on_after_component(on_after_component)
