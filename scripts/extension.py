@@ -63,6 +63,17 @@ def on_image_saved(imageSaveParams: script_callbacks.ImageSaveParams):
 script_callbacks.on_image_saved(on_image_saved)
 
 
+def on_after_component(component, **_):
+    # ti_galleryはトレーニングのものなので何もしない
+    if "_gallery" in component.elem_id and component.elem_id != "ti_gallery":
+        print(_)
+        with gr.Row():
+            gr.Button("tweet")
+
+
+script_callbacks.on_after_component(on_after_component)
+
+
 def on_ui_settings():
     section = ("auto tweet", "Auto Tweet")
     settings = [
