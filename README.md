@@ -2,6 +2,8 @@
 The generated images are automatically posted to your Twitter feed.
 This Extension is limited by its use of the Twitter API. This means that Free users can only post up to 50 Tweets per day.
 
+There is also a button to post the generated image to Twitter.
+
 # install
 Copy the link to this repository and install from [install from URL] and reload.
 
@@ -16,4 +18,3 @@ Enter the values obtained from the Twitter Developer Portal in each of the [Sett
 
 Turning on "Enable auto tweet" will automatically post the generated images to your Twitter feed.
 <img width="848" alt="スクリーンショット 2023-08-12 午後2 29 30" src="https://github.com/sinano1107/sd-webui-auto-tweet/assets/45984123/e1e16c67-e4ec-4c26-9137-fdb8fe38feba">
-
