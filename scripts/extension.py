@@ -10,7 +10,7 @@ from requests.models import Response
 autoTweet = False
 
 
-def tweet(filename):
+def tweet(filename, text=""):
     data = opts.data
     auth = OAuthHandler(
         data["consumer_key"],
@@ -27,7 +27,7 @@ def tweet(filename):
     )
     api = API(auth)
     media = api.media_upload(filename)
-    client.create_tweet(media_ids=[media.media_id])
+    client.create_tweet(text=text, media_ids=[media.media_id])
 
 
 def onChangeCheckbox(value):
@@ -78,17 +78,20 @@ def on_after_component(component, **_):
 
         component.select(on_select, inputs=[component])
 
-        with gr.Row():
+        with gr.Column():
+            tweet_text = gr.TextArea(label="tweet text")
             tweet_btn = gr.Button(
                 "tweet",
             )
 
-        def on_click():
+        def on_click(text):
             global selected_imgae
-            if not selected_imgae is None:
-                tweet(selected_imgae["name"])
+            if selected_imgae is None:
+                return text
+            else:
+                tweet(selected_imgae["name"], text)
 
-        tweet_btn.click(on_click)
+        tweet_btn.click(on_click, inputs=[tweet_text], outputs=[tweet_text])
 
 
 script_callbacks.on_after_component(on_after_component)
