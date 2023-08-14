@@ -8,31 +8,31 @@ from tweepy import OAuthHandler, API, Client, Unauthorized, TooManyRequests
 from requests.models import Response
 
 autoTweet = False
-api: API
-auth: OAuthHandler
-client: Client
+
+
+def tweet(filename):
+    data = opts.data
+    auth = OAuthHandler(
+        data["consumer_key"],
+        data["consumer_secret"],
+        data["access_token"],
+        data["access_token_secret"],
+    )
+    client = Client(
+        data["bearer_token"],
+        data["consumer_key"],
+        data["consumer_secret"],
+        data["access_token"],
+        data["access_token_secret"],
+    )
+    api = API(auth)
+    media = api.media_upload(filename)
+    client.create_tweet(media_ids=[media.media_id])
 
 
 def onChangeCheckbox(value):
     global autoTweet
     autoTweet = value
-    if autoTweet:
-        global api, auth, client
-        data = opts.data
-        auth = OAuthHandler(
-            data["consumer_key"],
-            data["consumer_secret"],
-            data["access_token"],
-            data["access_token_secret"],
-        )
-        client = Client(
-            data["bearer_token"],
-            data["consumer_key"],
-            data["consumer_secret"],
-            data["access_token"],
-            data["access_token_secret"],
-        )
-        api = API(auth)
 
 
 class AutoTweetScript(scripts.Script):
@@ -49,10 +49,8 @@ def on_image_saved(imageSaveParams: script_callbacks.ImageSaveParams):
     selected_imgae = None
     if autoTweet == False or "grid" in imageSaveParams.filename:
         return
-    global api, auth, client
     try:
-        media = api.media_upload(imageSaveParams.filename)
-        client.create_tweet(media_ids=[media.media_id])
+        tweet(imageSaveParams.filename)
     except (KeyError, Unauthorized):
         errors.report("Please auto-tweet set up.", exc_info=True)
     except TooManyRequests as e:
@@ -87,7 +85,8 @@ def on_after_component(component, **_):
 
         def on_click():
             global selected_imgae
-            print(selected_imgae)
+            if not selected_imgae is None:
+                tweet(selected_imgae["name"])
 
         tweet_btn.click(on_click)
 
