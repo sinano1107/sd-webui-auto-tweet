@@ -70,7 +70,7 @@ def on_after_component(component, **_):
     if component.elem_id is None:
         return
 
-    if component.elem_id == "txt2img_gallery":
+    if component.elem_id == "txt2img_gallery" or component.elem_id == "img2img_gallery":
 
         def on_select(gallery, evt: gr.SelectData):
             global selected_imgae
